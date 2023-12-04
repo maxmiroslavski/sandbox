@@ -1,25 +1,39 @@
 import styles from "./Modal.module.scss";
 
-import { ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
+import { ReactElement, ReactNode, cloneElement, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
-export const Modal = ({
-  children,
-  onClose,
-}: {
+import { Portal } from "../../atoms";
+
+interface ModalProps {
   children: ReactNode;
-  onClose: () => void;
-}) =>
-  createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className={styles.blackout}
-    >
-      <div className={styles.modal}>{children}</div>
-    </motion.div>,
-    document.getElementById("modal-root")!
+  button?: ReactNode;
+  id?: string;
+}
+
+export const Modal = ({ children, button, id }: ModalProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {cloneElement(button as ReactElement, {
+        onClick: () => setIsOpen(() => true),
+      })}
+      <AnimatePresence>
+        {isOpen && (
+          <Portal id={id}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.blackout}
+              onClick={() => setIsOpen(() => false)}
+            >
+              <div className={styles.modal}>{children}</div>
+            </motion.div>
+          </Portal>
+        )}
+      </AnimatePresence>
+    </>
   );
+};

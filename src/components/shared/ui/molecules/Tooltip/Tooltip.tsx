@@ -1,26 +1,54 @@
 import styles from "./Tooltip.module.scss";
 
-import { ReactNode } from "react";
-import { motion } from "framer-motion";
-import { createPortal } from "react-dom";
+import { ReactNode, useState, cloneElement, ReactElement, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-interface ToolTipProps {
+import { Portal } from "../../atoms";
+
+interface TooltipProps {
   children: ReactNode;
-  position?: DOMRect;
+  button: ReactNode;
+  offset?: number;
+  id?: string;
 }
 
-export const Tooltip = ({ children, position }: ToolTipProps) =>
-  createPortal(
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0 }}
-      className={styles.tooltip}
-      style={
-        position ? { top: position.top, left: `${position.left + 85}px` } : {}
-      }
-    >
-      {children}
-    </motion.div>,
-    document.getElementById("tooltip-root")!
+export const Tooltip = ({
+  children,
+  button,
+  offset = 10,
+  id,
+}: TooltipProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLElement | null>(null);
+
+  const position = buttonRef.current?.getBoundingClientRect();
+
+  return (
+    <>
+      {cloneElement(button as ReactElement, {
+        onMouseEnter: () => setIsOpen(() => true),
+        onMouseLeave: () => setIsOpen(() => false),
+        ref: buttonRef,
+      })}
+      <Portal id={id}>
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.tooltip}
+              style={
+                position
+                  ? { top: position.top, left: `${position.right + offset}px` }
+                  : {}
+              }
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Portal>
+    </>
   );
+};
